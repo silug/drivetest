@@ -42,7 +42,7 @@ TMP=$( mktemp /tmp/drivetest.XXXXXXXXXX ) || { \
 
 $smartctl -c $device | perl \
     -e 'while (<>) { if (/^(Short|Extended|Conveyance) self-test routine/) {' \
-    -e '$type=uc($1); $_=<>; $time=(/\(\s*(\d+)\)/)[0];' \
+    -e '$type=uc($1); $_=<>; $time=(/\(\s*(\d+)\)/)[0]+1;' \
     -e 'print $type."_SLEEP=$time\n" } }' > $TMP
 
 . $TMP
@@ -69,6 +69,8 @@ fi
 
 echo "Performing non-destructive write test..."
 $badblocks -s -n $device || { echo "FAIL" >&2 ; exit 1 ; };
+$smartctl -q silent -H -l error -l selftest $device || { \
+    $smartctl -H -l error -l selftest $device || : ; echo "FAIL" >&2 ; exit 1 ; };
 
 if [ -n "$EXTENDED_SLEEP" ]; then
     echo "Performing extended test..." \
